@@ -264,40 +264,86 @@ end
 
 -- Function to get RP for any rank 1-8000
 local function getRPForRank(rank)
+    local rp
     if rank <= #baseLevels then
-        return baseLevels[rank]
+        rp = tonumber(baseLevels[rank])
+    else
+        rp = math.floor(25*rank^2 + 23575*rank - 1023150)
     end
-    -- Quadratic approximation for high ranks
-    return math.floor(25*rank^2 + 23575*rank - 1023150)
+    return rp
 end
 
--- Helper function to set RP for player or crew
+-- Helper function to set RP for player or crew with debug
 local function setRankRP(levelValue, isCrew, changeSession)
     if levelValue <= 0 or levelValue > 8000 then
-        gui.show_message("ERROR", "Rank "..levelValue.." is out of range (1-8000).")
+        gui.show_message("ERROR", "Rank "..tostring(levelValue).." is out of range (1-8000).")
         return
     end
 
     local rp = getRPForRank(levelValue)
+    log.debug("Debug: RP = "..tostring(rp)..", type = "..type(rp))
 
     if isCrew then
         for i = 0, 4 do
-            stats.set_int("MPPLY_CREW_LOCAL_XP_"..i, rp)
+            local key = "MPPLY_CREW_LOCAL_XP_"..i
+            log.debug("Setting Crew XP: key="..key..", rp="..tostring(rp))
+            local ok, err = pcall(function()
+                stats.set_int(key, rp)
+            end)
+            if not ok then
+                log.debug("Error setting Crew XP: "..tostring(err))
+            end
         end
-        gui.show_message("Crew Rank Editor", "Your Crew Rank is now "..levelValue)
+        gui.show_message("Crew Rank Editor", "Your Crew Rank is now "..tostring(levelValue))
     else
-        stats.set_int(MPX() .. "CHAR_SET_RP_GIFT_ADMIN", rp)
-        globals.set_int(1575036, 11)
-        globals.set_int(1574589, 1)
-        globals.set_int(1574589, 0)
-        local msg = "Your rank is set to "..levelValue
+        -- Player RP
+        local key = MPX() .. "CHAR_SET_RP_GIFT_ADMIN"
+        log.debug("Setting Player RP: key="..tostring(key)..", rp="..tostring(rp))
+        local ok, err = pcall(function()
+            stats.set_int(key, rp)
+        end)
+        if not ok then
+            log.debug("Error setting Player RP: "..tostring(err))
+        end
+
+        -- Globals with pcall
+        local globalsToSet = {
+            {1575036, 11},
+            {1574589, 1},
+            {1574589, 0}
+        }
+        for _, g in ipairs(globalsToSet) do
+            local okg, errg = pcall(function()
+                globals.set_int(g[1], g[2])
+            end)
+            if not okg then
+                log.debug("Error setting global "..tostring(g[1])..": "..tostring(errg))
+            end
+        end
+
+        -- Message
+        local msg = "Your rank is set to "..tostring(levelValue)
         if changeSession then
             msg = msg .. ", changing session."
-            network.go_online(true)
+            local success, result = pcall(function()
+                -- Pasamos solo string, no tabla
+                command.call("switch_session", "INVITE")
+            end)
+            if success then
+                log.debug("Successfully changed sessions")
+            else
+               log.warning("Error changing session: " .. tostring(result))
+            end
         else
             msg = msg .. ", change session to apply."
         end
-        gui.show_message("Rank editor", msg)
+
+        local okMsg, errMsg = pcall(function()
+            gui.show_message("Rank editor", msg)
+        end)
+        if not okMsg then
+            log.debug("Error showing message: "..tostring(errMsg))
+        end
     end
 end
 
@@ -305,7 +351,6 @@ end
 RankEditor = ranksmenu:add_tab("Custom Rank Editor")
 RankEditor:add_text("Set your rank to:")
 local rankLevel = RankEditor:add_input_int("rank")
-
 
 RankEditor:add_button("Set rank and change session", function()
     setRankRP(rankLevel:get_value(), false, true)
