@@ -140,12 +140,13 @@ local unlocks_config = require("elexon-incl.unlocks")
 function unlock_packed_bools(from, to)
     for i = from, to do
         stats.set_packed_stat_bool(i, true)
-        print("[DEBUG] Unlocking stat ID:", i) -- prints to YimMenu console
+        log.info("[DEBUG] Unlocking stat ID:", i) -- prints to YimMenu console
+        -- gui.show_message("Unlocking", "Stat ID: " .. i)  -- Removed to prevent spam/crash
     end
 end
 
 LatestUnlock:add_button("Unlock Everything", function()
-    print("[DEBUG] Starting Unlock Everything") -- optional start marker
+    log.info("[DEBUG] Starting Unlock Everything") -- optional start marker
 
     -- Generic unlocks
     for _, range in ipairs(unlocks_config.generic) do
@@ -158,7 +159,7 @@ LatestUnlock:add_button("Unlock Everything", function()
         unlock_packed_bools(range.from, range.to)
     end
 
-    print("[DEBUG] Finished Unlock Everything") -- optional end marker
+    log.info("[DEBUG] Finished Unlock Everything") -- optional end marker
 end)
 
 
