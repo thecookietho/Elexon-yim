@@ -1,0 +1,5 @@
+test removed vehicle function
+test unlocks
+implement unlocks2.lua
+Move Hardcoded KDs from main into seperate file in elexon-incl and implement into main
+make risky transactions only trigger once in main
