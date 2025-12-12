@@ -1,3 +1,5 @@
+update "Claim vehicle as PV" function when new globals get published, currently crashes game
+
 test removed vehicle function
 
 
