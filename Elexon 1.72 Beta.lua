@@ -287,25 +287,13 @@ local function setRankRP(levelValue, isCrew, changeSession)
         gui.show_message("Crew Rank Editor", "Your Crew Rank is now "..levelValue)
     else
         stats.set_int(MPX() .. "CHAR_SET_RP_GIFT_ADMIN", rp)
-        globals.set_int(1575036, 11)
-        globals.set_int(1574589, 1)
-        globals.set_int(1574589, 0)
         local msg = "Your rank is set to "..levelValue
         if changeSession then
-            msg = msg .. ", changing session."
-            
-            local success, result = pcall(function()
-                command.call("switch_session", {"INVITE"})
-            end)
-            
-            if success then
-                log.debug("Succesfully changed sessions")
-            else
-               log.warning("Error: " .. result)
-            end
+            log.debug("changing session...")
 
-        else
-            msg = msg .. ", change session to apply."
+            -- Search new session
+            globals.set_int(1574589, 1)
+            globals.set_int(1574589, 0)
         end
         gui.show_message("Rank editor", msg)
     end
