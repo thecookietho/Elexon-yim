@@ -299,119 +299,70 @@ end)
 
 
 
-
--- Safe vehicle-claim patch for 1.72(maybe) (replace the previous RUN_SCRIPT/GIVE logic)
-local GARAGE_MENU_DATA    = 176 -- keep original as fallback; may need update for 1.72
-local VEHICLE_REWARD_DATA = 129 -- keep original as fallback; may need update for 1.72
+local GARAGE_MENU_DATA    = 176 -- 3A ? 42 ? 71 3A ? 42 ? 71 3A ? 42 ? 71 3A ? 42 ? 71 3A ? 42 ? 71 71 +1
+local VEHICLE_REWARD_DATA = 129 -- 3A ? 40 ? 5D ? ? ? 2A +1
 
 local should_run_script = false
 
-local function safe_get_pointer(script_name, offset)
-    local ok, ptr = pcall(function() return locals.get_pointer(script_name, offset) end)
-    if not ok then return nil end
-    if ptr == 0 or ptr == nil then return nil end
-    return ptr
+-- It's actually possible to save blacklisted vehicles as PV, but doing so requires patching a lot of scripts, and once the patches are disabled, the game will instantly delete these vehicles anyway, so it's not worth it.
+local function IS_VEHICLE_VALID_FOR_PV(vehicle_hash)
+    return scr_function.call_script_function("freemode", 0x913BB, "bool", {
+        { "int", vehicle_hash }
+    })
 end
 
--- wrapper for GIVE_VEHICLE_REWARD that uses pcall so lua errors don't crash game
-local function SAFE_GIVE_VEHICLE_REWARD(vehicle_id, data, transaction, garage, slot, state)
-    local ok, res = pcall(function()
-        return scr_function.call_script_function("am_mp_vehicle_reward", "GVR", "2D 0C 1E 00 00", "bool", {
-            { "int", vehicle_id },
-            { "ptr", data },
-            { "ptr", transaction },
-            { "ptr", garage },
-            { "ptr", slot },
-            { "ptr", state },
-            { "bool", false }, -- ??? (kept from original)
-            { "bool", true },  -- Set as Last PV
-            { "bool", true },  -- Display Cancel Error Message
-            { "bool", false }, -- Is Podium Vehicle
-            { "int", 0 },      -- ??? 
-            { "int", -1 }      -- ??? 
-        })
-    end)
-    if not ok then
-        return false, tostring(res)
-    end
-    return res, nil
+local function GIVE_VEHICLE_REWARD(vehicle_id, data, transaction, garage, slot, state)
+    return scr_function.call_script_function("am_mp_vehicle_reward", "GVR", "2D 0C 1E 00 00", "bool", {
+        { "int", vehicle_id },
+        { "ptr", data },
+        { "ptr", transaction },
+        { "ptr", garage },
+        { "ptr", slot },
+        { "ptr", state },
+        { "bool", false }, -- ???
+        { "bool", true },  -- Set as Last PV
+        { "bool", true },  -- Display Cancel Error Message
+        { "bool", false }, -- Is Podium Vehicle
+        { "int", 0 },      -- ???
+        { "int", -1 }      -- ???
+    })
 end
 
-local function RUN_SCRIPT_SAFE()
-    -- sanity checks
+local function RUN_SCRIPT()
     if not ENTITY.DOES_ENTITY_EXIST(self.get_veh()) then
         should_run_script = false
         return
     end
 
-    -- get pointers safely
-    local menu_data    = safe_get_pointer("am_mp_vehicle_reward", GARAGE_MENU_DATA)
-    local trans_res    = safe_get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 4)
-    local garage_id    = safe_get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 5)
-    local garage_slot  = safe_get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 6)
-    local reward_state = safe_get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 7)
-
-    -- if any pointer is missing, abort safely and show helpful message
-    if not menu_data or not trans_res or not garage_id or not garage_slot or not reward_state then
-        should_run_script = false
-        gui.show_error("Vehicle Reward", "Cannot claim vehicle: vehicle-reward script pointers invalid (1.72 changed layout?).")
-        log.warning("Vehicle Reward: missing pointer(s). Try updating GARAGE_MENU_DATA/VEHICLE_REWARD_DATA for 1.72.")
-        return
-    end
-
-    -- final check: ensure the vehicle model is valid for PV (keeps original safeguard)
-    local veh = self.get_veh()
-    local model = ENTITY.GET_ENTITY_MODEL(veh)
-    local ok = pcall(function() return IS_VEHICLE_VALID_FOR_PV(model) end)
-    if not ok or not IS_VEHICLE_VALID_FOR_PV(model) then
-        should_run_script = false
-        gui.show_error("Vehicle Reward", "This vehicle cannot be saved as a personal vehicle.")
-        return
-    end
-
-    -- call the function safely and capture errors
-    local succ, err = SAFE_GIVE_VEHICLE_REWARD(veh, menu_data, trans_res, garage_id, garage_slot, reward_state)
-    if not succ then
-        should_run_script = false
-        local msg = "Vehicle Reward failed: " .. (err or "unknown error")
-        gui.show_error("Vehicle Reward", msg)
-        log.warning(msg)
-        return
-    end
-
-    -- success path (attempt to clear inputs like original did)
-    -- note: check that the reward_state actually changed to avoid infinite loops
-    local state_val = locals.get_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 7)
-    if state_val and state_val ~= 3 then
-        locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 4, 0)
-        locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 5, 0)
-        locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 6, 0)
-        locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 7, 0)
-        should_run_script = false
-        gui.show_message("Vehicle Reward", "Claim attempted. If vehicle wasn't saved, a 1.72 offset update is likely needed.")
-    else
-        -- either no state value or it equals 3 (whatever original logic expected)
-        should_run_script = false
-        gui.show_message("Vehicle Reward", "Claim attempt finished; check garage/inventory.")
+    local menu_data          = locals.get_pointer("am_mp_vehicle_reward", GARAGE_MENU_DATA)
+    local transaction_result = locals.get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 4)
+    local garage_id          = locals.get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 5)
+    local garage_slot        = locals.get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 6)
+    local reward_state       = locals.get_pointer("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 7)
+	
+    if GIVE_VEHICLE_REWARD(self.get_veh(), menu_data, transaction_result, garage_id, garage_slot, reward_state) then
+        if locals.get_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 7) ~= 3 then
+            locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 4, 0)
+            locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 5, 0)
+            locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 6, 0)
+            locals.set_int("am_mp_vehicle_reward", VEHICLE_REWARD_DATA + 7, 0)
+            should_run_script = false
+        end
     end
 end
 
--- safer loop registration (replaces previous looped registration)
 script.register_looped("Vehicle Reward", function()
     if not script.is_active("am_mp_vehicle_reward") then
         should_run_script = false
         return
     end
+
     if should_run_script then
-        -- run the safer runner inside a fiber so it won't hold up UI
-        script.run_in_fiber(RUN_SCRIPT_SAFE)
+        RUN_SCRIPT()
     end
 end)
 
-
-
-
-local VehiclesMenu = VehiclesMenu:add_button("CLAIM CURRENT VEHICLE AS PV", function()
+VehiclesMenu:add_button("CLAIM CURRENT VEHICLE AS PV", function()
     script.run_in_fiber(function()
         if network.is_session_started() and script.is_active("freemode") and script.is_active("am_mp_vehicle_reward") then
             if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
