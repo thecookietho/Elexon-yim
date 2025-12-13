@@ -324,7 +324,7 @@ end
     NightClubMoney = recoverymenu:add_tab("Nightclub money loop")
 
     SafeAmount = 2000000  -- Increased from 250000 for higher payouts
-    SafeCapacity = 23680 -- NIGHTCLUBMAXSAFEVALUE
+    SafeCapacity = 250000 -- NIGHTCLUBMAXSAFEVALUE
     IncomeStart = 23657 -- NIGHTCLUBINCOMEUPTOPOP5
     IncomeEnd = 23676 -- NIGHTCLUBINCOMEUPTOPOP100
     local NLCl = 268

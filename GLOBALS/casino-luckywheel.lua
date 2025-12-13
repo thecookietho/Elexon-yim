@@ -1,25 +1,10 @@
-Casino Lucky Wheel"
- 
--- Enhanced 1.72 ~ b1013.17 --
- 
-// Lucky Wheel Globals
-Global_262145.f_26854 = 1  // Max. Spins Per Day
-Global_262145.f_26855 = TRUE // Enable Additional Spins
-Global_262145.f_37457 = 2 // Max. Spins Per Day w/ GTA+
- 
- 
-// Lucky Wheel OutCUM
-casino_lucky_wheel Local_143[PLAYER_ID * 5]
- 
-----------------------------
- 
 -- Legacy 1.72 ~ b3586 --
  
 // Lucky Wheel Globals
 Global_262145.f_26834  // Max. Spins Per Day
 Global_262145.f_26835 = TRUE // Enable Additional Spins
  
-// Lucky Wheel OutCUM
+// Lucky Wheel Outcome
 casino_lucky_wheel Local_141[PLAYER_ID * 5]
 
 Value - Prize
