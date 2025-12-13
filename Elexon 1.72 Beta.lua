@@ -24,6 +24,8 @@ log.warning("Enjoy Elexon :D")
     ScriptMainMenu:add_text("Elexon 1.72 Beta")
 
     reoverymenu = ScriptMainMenu:add_tab("Recovery Menu")
+    settings = ScriptMainMenu:add_tab("Script Settings")
+    settings:add_text("No settings available yet.")
 
     --[[ will add submenu for stats like KD later and move it to recovery menu ]]
 
@@ -272,39 +274,109 @@ end)
     
     TransactionManager.new():Init()
 
+
+--[[ Nightclub Money Loop & TP Functions ]]
+
+-- Nightclub property info table
+local NightclubPropertyInfo = {
+    [1]  = {name = "La Mesa Nightclub",           coords = {x = 757.009,   y =  -1332.32,  z = 27.1802 }},
+    [2]  = {name = "Mission Row Nightclub",       coords = {x = 345.7519,  y =  -978.8848, z = 29.2681 }},
+    [3]  = {name = "Strawberry Nightclub",        coords = {x = -120.906,  y =  -1260.49,  z = 29.2088 }},
+    [4]  = {name = "West Vinewood Nightclub",     coords = {x = 5.53709,   y =  221.35,    z = 107.6566}},
+    [5]  = {name = "Cypress Flats Nightclub",     coords = {x = 871.47,    y =  -2099.57,  z = 30.3768 }},
+    [6]  = {name = "LSIA Nightclub",              coords = {x = -676.625,  y =  -2458.15,  z = 13.8444 }},
+    [7]  = {name = "Elysian Island Nightclub",    coords = {x = 195.534,   y =  -3168.88,  z = 5.7903  }},
+    [8]  = {name = "Downtown Vinewood Nightclub", coords = {x = 373.05,    y =  252.13,    z = 102.9097}},
+    [9]  = {name = "Del Perro Nightclub",         coords = {x = -1283.38,  y =  -649.916,  z = 26.5198 }},
+    [10] = {name = "Vespucci Canals Nightclub",   coords = {x = -1174.85,  y =  -1152.3,   z = 5.56128 }},
+}
+
+-- Helper functions to get nightclub offsets
+local function GetOnlineWorkOffset()
+    local playerid = globals.get_int(1574918)
+    return (1853988 + 1 + (playerid * 867) + 267)
+end
+
+local function GetNightClubOffset()
+    return (GetOnlineWorkOffset() + 354)
+end
+
+local function GetNightClubPropertyID()
+    return globals.get_int(GetNightClubOffset())
+end
+
+-- Teleport to Nightclub function(doesnt work rn)
+
+function tpnc()
+    local property = GetNightClubPropertyID()
+    if property ~= 0  then
+        local coords = NightclubPropertyInfo[property].coords
+        PED.SET_PED_COORDS_KEEP_VEHICLE(PLAYER.PLAYER_PED_ID(), coords.x, coords.y, coords.z)
+    end
+end
+
+--[[ Nightclub Money Loop ]]
+-- Improved: Increased SafeAmount for higher payouts, adjusted timing for better triggering <AI shit still only gives 1.5k
+
     NightClubMoney = reoverymenu:add_tab("Nightclub money loop")
 
-    SafeAmount = 250000
-    SafeCapacity = 23680 --NIGHTCLUBMAXSAFEVALUE
-    IncomeStart = 23657 --NIGHTCLUBINCOMEUPTOPOP5
-    IncomeEnd = 23676 --NIGHTCLUBINCOMEUPTOPOP100
+    SafeAmount = 2000000  -- Increased from 250000 for higher payouts
+    SafeCapacity = 23680 -- NIGHTCLUBMAXSAFEVALUE
+    IncomeStart = 23657 -- NIGHTCLUBINCOMEUPTOPOP5
+    IncomeEnd = 23676 -- NIGHTCLUBINCOMEUPTOPOP100
+    local NLCl = 268
+    NLCl = 268 -- Local index for triggering nightclub payout in am_mp_nightclub
     
     NCRSCB = NightClubMoney:add_checkbox("Enable Nightclub money loop")
     script.register_looped("nightclubremotelooptest", function(script)
         script:yield()
         if NCRSCB:is_enabled() == true then
-            SafeValue = 1845221 + self.get_id() + 268 + 360 + 6
+            -- Calculate safe value global (adjusted for better accuracy)
+            local player_id = globals.get_int(1574918)  -- Get player index
+            SafeValue = 1845221 + player_id * 867 + 354 + 10  -- More precise offset for nightclub safe
+            
+            -- Set income globals to high value for max earnings
             for i = IncomeStart, IncomeEnd do
                 globals.set_int(262145 + i, SafeAmount)
             end
+            -- Set safe capacity
             globals.set_int(262145 + SafeCapacity, SafeAmount)
+            -- Max popularity
+            globals.set_int(262145 + 30106, 100)
+            -- Reset pay time
             stats.set_int(MPX() .. "CLUB_PAY_TIME_LEFT", -1)
-            script:sleep(2500)
-            if globals.get_int(SafeValue) ~= 0 then
-            end
+            
+            script:sleep(1000)  -- Reduced sleep for faster triggering
+            
+            -- Set safe value and trigger payout
+            globals.set_int(SafeValue, SafeAmount)
             locals.set_int("am_mp_nightclub", NLCl, 1)
+            
+            -- Clear some globals to prevent issues
             globals.set_int(4538089, 0)
             globals.set_int(4538090, 0)
             globals.set_int(4538091, 0)
-            script:sleep(1000)
+            
+            script:sleep(500)  -- Shorter sleep between loops
         end
     end)
     
     NightClubMoney:add_separator()
 
+    NightClubMoney:add_button("TP to Nightclub", function()
+        tpnc()
+    end)
+
+    NightClubMoney:add_sameline()
+
+    NightClubMoney:add_button("TP to Nightclub Safe", function()
+        PED.SET_PED_COORDS_KEEP_VEHICLE(PLAYER.PLAYER_PED_ID(), -1615.6832, -3015.7546, -75.204994)
+    end)
+
 
 
 --[[ Report Checker & Editor. might add auto session change for applying Later ]] 
+
     CheckUrReports = reoverymenu:add_tab("REPORTS")
 local function add_editable_report(label, stat_key)
     local current = stats.get_int(stat_key)
@@ -424,22 +496,21 @@ end)
 
 
 ----------------------------------------------------------------------
+------[[ Credits Section (implemented into settings tab) ]]-----------
+----------------------------------------------------------------------
 
--- Obviously not us, will change credits and move to settings tab when implemented
+ilovecredits = settings:add_tab("Credits <3")
 
-ilovecredits = ScriptMainMenu:add_tab("C R E D I T S")
+    TCC = ilovecredits:add_tab("TCC - TheCookieTho")
+    TCC:add_text("Elexon Main Developer, Script Writer & Tester")
+    TCC:add_text("Reach out to me on Discord @njdergeilomat")
 
-    ScriptMainMenui = ilovecredits:add_tab("INTRXDUCE")
-    ScriptMainMenui:add_text("UTHENSIA MENU DEVELOPER")
-    ScriptMainMenui:add_text("INSTAGRAM:")
-    ScriptMainMenui:add_text("https://www.instagram.com/intrxduce.gta/")
+    Rrocas = ilovecredits:add_tab("Rrocas")
+    Rrocas:add_text("Elexon Co-Developer, Script Writer & Tester")
     
-    Shoxii = ilovecredits:add_tab("Shoxii_")
-    Shoxii:add_text("FIRST PERSON TO TEST UTHENSIA")
-    Shoxii:add_text("DISCORD: shoxii.")
 
-ThanksMate = ilovecredits:add_tab("SPECIAL THANKS TO:")
-yagz2jz = ThanksMate:add_tab("Yagz2jz")
-             yagz2jz:add_text("HELPED ME A LOT WITH THE MENU AND GAVE ME SO MANY IDEAS.")
-             yagz2jz:add_text("INSTAGRAM:")
-             yagz2jz:add_text("https://www.instagram.com/yagz2jz/")
+    SpecialThanks = ilovecredits:add_tab("Special Thanks To:")
+    SpecialThanks:add_text("INTRXDUCE - For script base(UTHENSIA)")
+    SpecialThanks:add_text("ShinyWasabi - For Claiming Vehicle as PV script")
+    SpecialThanks:add_text("Alestarov - For Nightclub money loop & tp functions")
+    SpecialThanks:add_text("YimMura & YimMenu Collaborators - For YimMenu API")
