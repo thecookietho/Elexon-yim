@@ -1,5 +1,13 @@
-local unlocks = {
+--elexon-incl/unlocks.lua
+
+
+
+local M = {}
+
+M.packed = {
+
     generic = {
+
         {from = 110, to = 113}, --Red Check Pajamas, Green Check Pajamas, Black Check Pajamas, I Heart LC T-shirt
         {from = 115, to = 115}, --Roosevelt
         {from = 124, to = 124}, --Sanctus
@@ -172,6 +180,8 @@ local unlocks = {
         {from = 51215, to = 51258}, --Alpine Outfit, Brown Alpine Hat, Pisswasser Good Time Tee, Gold Pisswasser Shorts, Mid Autumn Festival Shirt, Mid Autumn Festival Sundress (female), Día de Muertos Tee, Halloween Spooky Tee, Black Demon Goat Mask, Red Demon Goat Mask, Tan Demon Goat Mask, Black Creepy Cat Mask, Gray Creepy Cat Mask, Brown Creepy Cat Mask, Gray Hooded Skull Mask, Red Hooded Skull Mask, Blue Hooded Skull Mask, Red Flaming Skull Mask, Green Flaming Skull Mask, Orange Flaming Skull Mask, Orange Glow Skeleton Onesie, Purple Glow Skeleton Onesie, Green Glow Skeleton Onesie, Tan Turkey, Brown Turkey, Rockstar Red Logo Sweater, Silver Gun Necklace, Black Gun Necklace, Gold Gun Necklace, Rose Gun Necklace, Bronze Gun Necklace, Black Yeti Fall Sweater, White Yeti Fall Sweater, Red Yeti Fall Sweater, The Diamond Jackpot Tee, Cobalt Jackal Racing Jersey, Cobalt Jackal Racing Pants, Khaki 247 Chino Pants, Demon Biker Jacket, Purple Güffy Cardigan, SA Denim Biker Jacket, Green 247 Shirt, Barbed Wire Shirt, Ride or Die Gaiter, Pizza This... Tee
 
     },
+
+
     male = {
          {from = 3483, to = 3492}, --Death Defying T-Shirt (Male), For Hire T-Shirt (Male), Gimme That T-Shirt (Male), Asshole T-Shirt (Male), Can't Touch This T-Shirt (Male), Decorated T-Shirt (Male), Psycho Killer T-Shirt (Male), One Man Army T-Shirt (Male), Shot Caller T-Shirt (Male), Showroom T-Shirt (Male)
             {from = 6082, to = 6083}, --Black Benny's T-Shirt, White Benny's T-Shirt
@@ -199,6 +209,8 @@ local unlocks = {
             {from = 41293, to = 41293}, --Hinterland Work T-Shirt (Male)
 
     },
+
+
     female = {
                     {from = 3496, to = 3505}, --Death Defying Top (Female), For Hire Top (Female), Gimme That Top (Female), Asshole Top (Female), Can't Touch This Top (Female), Decorated Top (Female), Psycho Killer Top (Female), One Man Army Top (Female), Shot Caller Top (Female), Showroom Top (Female)
             {from = 6091, to = 6092}, --Black Benny's T-Shirt, White Benny's T-Shirt
@@ -228,6 +240,113 @@ local unlocks = {
     }
 }
 
-return unlocks
 
 
+-- PACKED BOOL UNLOCK
+
+local function unlock_packed_range(from, to)
+    for i = from, to do
+        stats.set_packed_stat_bool(i, true)
+    end
+end
+
+function M.unlock_packed(player_is_male)
+    for _, range in ipairs(unlocks.common) do
+        unlock_packed_range(range.from, range.to)
+    end
+
+    local gender = player_is_male and M.packed.male or M.packed.female
+    for _, range in ipairs(gender) do
+        unlock_packed_range(range.from, range.to)
+    end
+end
+
+-- NORMAL STAT UNLOCKS (from unlocks2.lua)
+M.stats = {
+    ints = {
+        -- add integer stat unlocks here
+        { "GANGOPS_FLOW_MISSION_PROG", 240 },
+        { "GANGOPS_HEIST_STATUS", 229378 },
+        { "GANGOPS_FLOW_NOTIFICATIONS", 1557 },
+
+    },
+
+    bools = {
+        -- add boolean stat unlocks here
+},
+
+masked_bools = {
+        -- add masked boolean stat unlocks here
+    }
+}
+
+
+-- Helpers
+
+local function unlock_packed_range(from, to)
+    for i = from, to do
+        stats.set_packed_stat_bool(i, true)
+    end
+end
+
+
+-- apply normal stats
+
+function M.unlock_stats(MPX)
+    if not MPX then
+        log.error("MPX not provided to unlocks.unlock_stats")
+        return
+    end
+
+    local prefix = MPX()
+
+    for _, s in ipairs(M.stats.ints) do
+        stats.set_int(prefix .. s[1], s[2])
+    end
+
+    for _, s in ipairs(M.stats.bools) do
+        stats.set_bool(prefix .. s[1], s[2])
+    end
+
+    for _, s in ipairs(M.stats.masked_bools) do
+        stats.set_bool_masked(prefix .. s[1], s[2], s[3])
+    end
+end
+
+-- bunker research
+
+function M.unlock_bunker_research()
+    script.execute_as_script("shop_controller", function()
+        local research_ids = {
+            15381, 15382, 15428, 15429, 15430,
+            15431, 15432, 15433, 15434, 15435,
+            15436, 15437, 15438, 15439,
+            15447, 15448, 15449, 15450,
+            15451, 15452, 15453, 15454,
+            15455, 15456, 15457, 15458,
+            15459, 15460, 15461, 15462,
+            15463, 15464, 15465, 15466,
+            15467, 15468, 15469, 15470,
+            15471, 15472, 15473, 15474,
+            15491, 15492, 15493, 15494,
+            15495, 15496, 15497, 15498,
+            15499
+        }
+
+        for _, id in ipairs(research_ids) do
+            stats.set_packed_stat_bool(id, true)
+        end
+    end
+)
+
+end
+
+-- master unlock function
+
+function M.unlock_everything(MPX, player_is_male)
+    M.unlock_packed(player_is_male)
+    M.unlock_stats(MPX)
+    M.unlock_bunker_research()
+end
+
+return M
