@@ -8,20 +8,17 @@ function M.apply(MPX)
     end
 
 
-    stats.set_int(MPX() .. "GANGOPS_FLOW_MISSION_PROG", 240)
-    stats.set_int(MPX() .. "GANGOPS_HEIST_STATUS", 229378)
-    stats.set_int(MPX() .. "GANGOPS_FLOW_NOTIFICATIONS", 1557)
 
-    stats.set_int(MPX() .. "FIXER_GENERAL_BS", -1)
-    stats.set_int(MPX() .. "FIXER_COMPLETED_BS", -1)
-    stats.set_int(MPX() .. "FIXER_STORY_BS", -1)
 
-    -- KEEP ALL YOUR OTHER STATS EXACTLY THE SAME
-    -- Just indented inside this function
+    
 
 
 
-stats.set_int(MPX() .. "GANGOPS_FLOW_MISSION_PROG", 240)
+
+        stats.set_int(MPX() .. "FIXER_GENERAL_BS", -1)
+        stats.set_int(MPX() .. "FIXER_COMPLETED_BS", -1)
+        stats.set_int(MPX() .. "FIXER_STORY_BS", -1)
+        stats.set_int(MPX() .. "GANGOPS_FLOW_MISSION_PROG", 240)
         stats.set_int(MPX() .. "GANGOPS_HEIST_STATUS", 229378)
         stats.set_int(MPX() .. "GANGOPS_FLOW_NOTIFICATIONS", 1557)
         stats.set_int(MPX() .. "GANGOPS_FLOW_MISSION_PROG", 240)
