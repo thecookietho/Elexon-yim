@@ -1,21 +1,38 @@
-return function(parent)
-    if not parent then
-        log.error("Vehicle menu parent menu is nil")
-        return
+function toolTip(tab, text, seperate)
+    seperate = seperate or false
+    if tab == "" then
+        if seperate then --waiting approval
+            ImGui.SameLine()
+            ImGui.TextDisabled("(?)")
+        end
+        if ImGui.IsItemHovered() then
+            ImGui.BeginTooltip()
+      ImGui.Text(text)
+            ImGui.EndTooltip()
+        end
+    else
+        tab:add_imgui(function()
+            if seperate then
+                ImGui.SameLine()
+                ImGui.TextDisabled("(?)")
+            end
+            if ImGui.IsItemHovered() then
+                ImGui.BeginTooltip()
+                ImGui.Text(text)
+                ImGui.EndTooltip()
+            end
+        end)
     end
+end
 
-local removed_vehicles = require("elexon-incl.removed_vehicles")                            -- load the removed vehicles list
--------------------------------------------------------------------------------------------------------------
---[[ Claim Vehicle as PV function ]]--
--------------------------------------------------------------------------------------------------------------
+local vehicle_tab = gui.get_tab("GUI_TAB_VEHICLE")
+
 local GARAGE_MENU_DATA    = 176 -- 3A ? 42 ? 71 3A ? 42 ? 71 3A ? 42 ? 71 3A ? 42 ? 71 3A ? 42 ? 71 71 +1
 local VEHICLE_REWARD_DATA = 129 -- 3A ? 40 ? 5D ? ? ? 2A +1
 
 local should_run_script = false
 
---[[ Claim Current Vehicle as Personal Vehicle(PV) ]]
--- will move to vehicle_menu.lua later
-
+-- It's actually possible to save blacklisted vehicles as PV, but doing so requires patching a lot of scripts, and once the patches are disabled, the game will instantly delete these vehicles anyway, so it's not worth it.
 local function IS_VEHICLE_VALID_FOR_PV(vehicle_hash)
     return scr_function.call_script_function("freemode", 0x913BB, "bool", {
         { "int", vehicle_hash }
@@ -73,43 +90,22 @@ script.register_looped("Vehicle Reward", function()
     end
 end)
 
-parent:add_text("Vehicle Menu Options")
-parent:add_button("Claim current Vehicle as PV", function()
+vehicle_tab:add_button("Claim Current Vehicle as PV", function()
     script.run_in_fiber(function()
         if network.is_session_started() and script.is_active("freemode") and script.is_active("am_mp_vehicle_reward") then
             if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
                 if IS_VEHICLE_VALID_FOR_PV(ENTITY.GET_ENTITY_MODEL(self.get_veh())) then
                     should_run_script = true
                 else
-                    log.debug("Vehicle Reward", "This vehicle cannot be saved as a personal vehicle.")
+                    gui.show_error("Vehicle Reward", "This vehicle cannot be saved as a personal vehicle.")
                 end
             else
-                log.debug("Vehicle Reward", "Please get in a vehicle.")
+                gui.show_error("Vehicle Reward", "Please get in a vehicle.")
             end
         else
-            log.debug("Vehicle Reward", "Cannot give vehicle at the moment. Are you online?")
+            gui.show_error("Vehicle Reward", "Cannot give vehicle at the moment. Are you online?")
         end
     end)
 end)
+toolTip(vehicle_tab, "Allows you to claim the vehicle you are inside of as a Personal Vehicle and sends it to the garage of your choice.")
 
-
---------------------------------------------------------------------------------------------------------------
---[[ Auto load removed vehicles on session start ]]--
---------------------------------------------------------------------------------------------------------------
-
-local removed_vehicles_triggered = false
-
-script.register_looped("removed_vehicles_auto", function(script)
-    script:yield()
-    if network.is_session_started() and not removed_vehicles_triggered then
-        log.debug("[Load Removed Vehicles][DEBUG] Starting auto-trigger for removed vehicles")
-        for _, offset in ipairs(removed_vehicles) do -- iterate through each offset
-            print("[Load Removed Vehicles][DEBUG] Setting global: " .. tostring(262145 + offset))
-            globals.set_int(262145 + offset, 1) -- set the global to 1
-        end
-        log.debug("[Load Removed Vehicles][DEBUG] Finished auto-trigger")
-        removed_vehicles_triggered = true
-    end
-end)
-
-end

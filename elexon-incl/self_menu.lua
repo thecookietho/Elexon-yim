@@ -7,33 +7,22 @@ end
 
 return function(SelfTab)
     SelfTab:add_separator()
-    SelfTab:add_button("Max Armour & Snacks", function()
+    SelfTab:add_button("Max Armour & Snacks(x1000)", function()
 
-        -- Snacks
-        local snacks = {
-            "NO_BOUGHT_YUM_SNACKS",
-            "NO_BOUGHT_HEALTH_SNACKS",
-            "NO_BOUGHT_EPIC_SNACKS",
-            "NO_BOUGHT_MEGALODON_SNACKS",
-            "NO_BOUGHT_PSYCHO_SNACKS"
-        }
-
-        for _, snack in ipairs(snacks) do
-            stats.set_int(MPX() .. snack, 1000)
-        end
-
-        -- Armour
-        local armours = {
-            "MP_CHAR_ARMOUR_1",
-            "MP_CHAR_ARMOUR_2",
-            "MP_CHAR_ARMOUR_3",
-            "MP_CHAR_ARMOUR_4",
-            "MP_CHAR_ARMOUR_5"
-        }
-
-        for _, armour in ipairs(armours) do
-            stats.set_int(MPX() .. armour, 1000)
-        end
+       	stats.set_int(MPX() .. "NO_BOUGHT_YUM_SNACKS", 1000)
+	stats.set_int(MPX() .. "NO_BOUGHT_HEALTH_SNACKS", 1000)
+	stats.set_int(MPX() .. "NO_BOUGHT_EPIC_SNACKS", 1000)
+	stats.set_int(MPX() .. "NUMBER_OF_CHAMP_BOUGHT", 1000)
+	stats.set_int(MPX() .. "NUMBER_OF_ORANGE_BOUGHT", 1000)
+	stats.set_int(MPX() .. "NUMBER_OF_BOURGE_BOUGHT", 1000)
+	stats.set_int(MPX() .. "NUMBER_OF_SPRUNK_BOUGHT", 1000)
+	stats.set_int(MPX() .. "CIGARETTES_BOUGHT", 1000)
+	stats.set_int(MPX() .. "MP_CHAR_ARMOUR_1_COUNT", 1000)
+	stats.set_int(MPX() .. "MP_CHAR_ARMOUR_2_COUNT", 1000)
+	stats.set_int(MPX() .. "MP_CHAR_ARMOUR_3_COUNT", 1000)
+	stats.set_int(MPX() .. "MP_CHAR_ARMOUR_4_COUNT", 1000)
+	stats.set_int(MPX() .. "MP_CHAR_ARMOUR_5_COUNT", 1000)
+	stats.set_int(MPX() .. "BREATHING_APPAR_BOUGHT", 1000)
 
         gui.show_message("Self Menu", "Max Snacks & Armour applied")
     end)
