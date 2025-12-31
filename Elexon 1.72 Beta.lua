@@ -43,7 +43,7 @@ log.info("Enjoy Elexon :D")
             CasinoServicesMenu = MoneyMenu:add_tab("Casino Services")                       -- Recovery Menu -> Money Methods -> Casino Services
             NightClub = MoneyMenu:add_tab("Nightclub money loop")                           -- Recovery Menu -> Money Methods -> Nightclub money loop
 
-    HeistMenu = recoverymenu:add_tab("Heist Editor")                                        -- Recovery Menu -> Heist editor
+    --HeistMenu = recoverymenu:add_tab("Heist Editor")                                        -- Recovery Menu -> Heist editor
 
     StatsMenu = recoverymenu:add_tab("Stats Menu")                                          -- Recovery Menu -> Stats Menu
         RP_settings = StatsMenu:add_tab("Crew / Rank Editor")                               -- Recovery Menu -> Stats Menu -> RP Editor
@@ -75,9 +75,7 @@ require("elexon-incl.heist_editor")(recoverymenu)                               
 require("elexon-incl.vehicle_menu")(VehiclesMenu)                                           -- Vehicle Menu
 require("elexon-incl.settings")(SettingsMenu)                                               -- Settings Menu
 
-local packed_unlocks = require("elexon-incl.unlocks")
-local unlocks_config = require("elexon-incl.unlocks")                                       -- load the unlocks configuration
-local stat_unlocks   = require("elexon-incl.unlocks2")
+local unlocks = require("elexon-incl.unlocks_consolidated")                                 -- consolidated unlocks system
 
 
 
@@ -86,79 +84,13 @@ function mp()
     return "MP" .. stats.get_int("MPPLY_LAST_MP_CHAR") .. "_"
 end
 
-
 Info = MoneyMenu:add_tab("Read before using Money Methods")
 Info:add_text("Money Methods are always risky.")
 Info:add_text("If you dont want to risk your account, do not use Money Methods.")
 Info:add_separator()
 Info:add_text("If you choose to use Money Methods, dont go over 10.000.000GTA$ per real life day.")
-------------------------------------------------------------------------------
---[[ Unlocker Menu ]]--
-------------------------------------------------------------------------------
 
+-- Setup unlock GUI
+unlocks.setup_gui(LatestUnlock, MPX, player_male, script)
 
-function unlock_packed_bools(from, to)
-    for i = from, to do
-        stats.set_packed_stat_bool(i, true)
-        -- log.debug("[DEBUG] Unlocking stat ID:", i) -- prints to YimMenu console. commented out to stop spam and clogging of logs
-    end
-end
-
-Acv0 = false
-AG = 4546910 + 1 --("CHEAT_ACHIEVE")
-
-LatestUnlock:add_button("Unlock All Achievements", function()
-	script.run_in_fiber(function(script)
-		for i = 0, 77 do
-			script:sleep(200)
-			globals.set_int(AG, i)
-			if i == 77 then
-				gui.show_message("Achievements", "Unlocked 77 Achievements")
-			end
-		end
-	end)
-end)
-
-LatestUnlock:add_sameline()
-
-LatestUnlock:add_button("Max Character Skills", function()
-	stats.set_int(MPX() .. "SCRIPT_INCREASE_DRIV", 100)
-	stats.set_int(MPX() .. "SCRIPT_INCREASE_FLY", 100)
-	stats.set_int(MPX() .. "SCRIPT_INCREASE_LUNG", 100)
-	stats.set_int(MPX() .. "SCRIPT_INCREASE_SHO", 100)
-	stats.set_int(MPX() .. "SCRIPT_INCREASE_STAM", 100)
-	stats.set_int(MPX() .. "SCRIPT_INCREASE_STL", 100)
-	stats.set_int(MPX() .. "SCRIPT_INCREASE_STRN", 100)
-end)
-
-LatestUnlock:add_sameline()
-
-LatestUnlock:add_button("Unlock Everything", function()
-    log.debug("[DEBUG] Starting to Unlock Everything")
-
-    -- packed bools
-    for _, range in ipairs(unlocks_config.generic) do
-        unlock_packed_bools(range.from, range.to)
-    end
-
-    local gender_ranges = player_male and unlocks_config.male or unlocks_config.female
-    for _, range in ipairs(gender_ranges) do
-        unlock_packed_bools(range.from, range.to)
-    end
-
-    -- normal stats
-    stat_unlocks.apply(MPX)
-
-    log.debug("[DEBUG] Finished Unlock Everything")
-end)
-
-GeCh = LatestUnlock:add_checkbox("Unlock Gender Change")
-script.register_looped("UnlockGenderChange", function(script)
-	script:yield()
-	if GeCh:is_enabled() then
-		stats.set_int(MPX() .. "ALLOW_GENDER_CHANGE", 52)
-	else
-		stats.set_int(MPX() .. "ALLOW_GENDER_CHANGE", 52)
-	end
-end)
 
