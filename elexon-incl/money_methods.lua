@@ -13,48 +13,21 @@ end
 
 -- nightclub locations table
 local nightclubs = {
-    [0] = { name = "Mission Row",        x = 345.7519,  y = -978.8848, z = 29.2681 },
-    [1] = { name = "Strawberry",         x = -120.906,  y = -1260.49,  z = 29.2088 },
-    [11] = { name = "West Vinewood",      x = 5.53709,   y = 221.35,    z = 107.6566 },
-    [3] = { name = "Cypress Flats",      x = 871.47,    y = -2099.57,  z = 30.3768 },
-    [4] = { name = "LSIA",               x = -676.625,  y = -2458.15,  z = 13.8444 },
-    [5] = { name = "Elysian Island",     x = 195.534,   y = -3168.88,  z = 5.7903 },
-    [2] = { name = "Downtown Vinewood",  x = 373.05,    y = 252.13,    z = 102.9097 },
-    [7] = { name = "Del Perro",          x = -1283.38,  y = -649.916,  z = 26.5198 },
-    [8] = { name = "Vespucci Canals",    x = -1174.85,  y = -1152.3,   z = 5.56128 },
-    [9] = { name = "La Mesa",            x = 757.009,   y = -1332.32,  z = 27.1802 }
+    { name = "La Mesa Nightclub",           coords = vec3:new(757.009, -1332.32, 27) },
+    { name = "Mission Row Nightclub",       coords = vec3:new(345.7519, -978.8848, 29) },
+    { name = "Strawberry Nightclub",        coords = vec3:new(-120.906, -1260.49, 29) },
+    { name = "West Vinewood Nightclub",     coords = vec3:new(5.53709, 221.35, 107) },
+    { name = "Cypress Flats Nightclub",     coords = vec3:new(871.47, -2099.57, 30) },
+    { name = "LSIA Nightclub",              coords = vec3:new(-675.225, -2459.15, 13) },
+    { name = "Elysian Island Nightclub",    coords = vec3:new(195.534, -3168.88, 5) },
+    { name = "Downtown Vinewood Nightclub", coords = vec3:new(373.05, 252.13, 102) },
+    { name = "Del Perro Nightclub",         coords = vec3:new(-1283.38, -649.916, 26) },
+    { name = "Vespucci Canals Nightclub",   coords = vec3:new(-1174.85, -1152.3, 5) },
 }
 
--- Helper functions to get nightclub offsets
-local function GetOnlineWorkOffset()
-    return (1853988 + 1 + self.get_id() + 267)
-end
 -- Function to get Nightclub Index
 function GetNightClubIndex()
-    local raw = stats.get_int(MPX() .. "CLUB_PROPERTY_ID")
-
-    if raw == -1 then
-        return -1
-    end
-
-    log.debug("Nightclub raw value = " .. raw)
-        -- convert signed int to unsigned
-    local unsigned = raw
-    if unsigned < 0 then
-        unsigned = unsigned + 0x100000000
-    end
-
-    -- extract bits 28–31
-    local index = math.floor(unsigned / 0x10000000) % 16
-
-        -- debug log
-    log.debug(string.format(
-        "Nightclub raw=%d index=%d",
-        raw,
-        index
-    ))
-
-    return index
+    return stats.get_int("MPX_NIGHTCLUB_OWNED")
 end
 
 function tpnc()
@@ -80,9 +53,9 @@ function tpnc()
 
     ENTITY.SET_ENTITY_COORDS_NO_OFFSET(
         PLAYER.PLAYER_PED_ID(),
-        info.x,
-        info.y,
-        info.z,
+        info.coords.x,
+        info.coords.y,
+        info.coords.z,
         false, false, false
     )
 end
@@ -109,11 +82,10 @@ end
             -- Set safe capacity
             globals.set_int(262145 + SafeCapacity, SafeAmount)
             -- Max popularity
-            stats.set_int(MPX() .. "CLUB_POPULARITY", 1000)
+            stats.set_int("MPX_CLUB_POPULARITY", 1000)
             -- Reset pay time
-            stats.set_int(MPX() .. "CLUB_PAY_TIME_LEFT", -1)
+            stats.set_int("MPX_CLUB_PAY_TIME_LEFT", -1)
             
-            script:sleep(1000)  -- Reduced sleep for faster triggering
             
             -- Set safe value and trigger payout
             globals.set_int(SafeValue, SafeAmount)
@@ -124,7 +96,7 @@ end
             globals.set_int(4516903, 0)
             globals.set_int(4516904, 0)
             
-            script:sleep(500)  -- Shorter sleep between loops
+            script:sleep(2500)  -- 2,5 second delay before next loop seems to work fine
         end
     end)
     
@@ -137,8 +109,18 @@ end
     NightClub:add_sameline()
 
     NightClub:add_button("TP to Nightclub Safe", function()
-        tpnc_safe()
+        tpnc_safe(-1616, -3016, -75)
     end)
+
+
+function tpnc_safe(x, y, z)
+    local playerPed = PLAYER.PLAYER_PED_ID()
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(
+        playerPed,
+        x, y, z,
+        false, false, false
+    )
+end
 
 
 
